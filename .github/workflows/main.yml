@@ -1,0 +1,28 @@
+# Ieliec šo failu repozitorijā kā .github/workflows/update-ics.yml
+name: Atjaunot RTU kalendāru
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # katru dienu ~05:17/06:17 pēc Rīgas laika
+  workflow_dispatch:        # ļauj palaist arī ar roku
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python rtu_ics.py --program RBCB0 --course 1 --group 2 -o rtu.ics
+      - name: Saglabāt izmaiņas
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add rtu.ics
+          git diff --cached --quiet || git commit -m "Atjaunots grafiks"
+          git push
